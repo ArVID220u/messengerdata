@@ -14,6 +14,8 @@ import json
 from datetime import datetime
 from datetime import timedelta
 import os
+import random
+import ftfy
 
 # for the names to id conversion
 import setup
@@ -42,11 +44,14 @@ def load_data(messages_directory):
             message['sender'] = message['sender_name']
             if 'content' not in message:
                 message['content'] = ''
+            message['content'] = ftfy.ftfy(message['content'])
+            message['sender'] = ftfy.ftfy(message['sender'])
         # for consistency, copy participants to members
         threaddict['members'] = []
         if 'participants' in threaddict:
             for participant in threaddict['participants']:
-                threaddict['members'].append(participant)
+                threaddict['members'].append(ftfy.ftfy(participant))
+        threaddict['title'] = ftfy.ftfy(threaddict['title'])
         threaddict['members'].append(setup.user)
         # add index
         global threads
@@ -80,7 +85,7 @@ def main(messages_directory):
 
 
     # temporary
-    show_arvid_per_thread("words")
+    show_arvid_per_thread("words",threshold=2000,movingaverage=80,stackplot=False)
     #show_arvid_per_thread("messages",threshold=100)
 
 
@@ -422,7 +427,7 @@ def plot_time_data(times, series, stackplot=True):
 # plot number of words or messages per thread
 # threshold is number of words/messages user must have sent to show the thread in the graph
 # movingaverage creates a movingaverage for smoother plots
-def show_arvid_per_thread(worm, threshold=1000, movingaverage=50):
+def show_arvid_per_thread(worm, threshold=1000, movingaverage=50, stackplot=True):
     k = None
     if worm == "words":
         k = "words_per_member"
@@ -477,7 +482,10 @@ def show_arvid_per_thread(worm, threshold=1000, movingaverage=50):
         seryy["datapoints"] = avsery
         #averageseries.append(avsery)
 
-    plot_time_data(times, series)
+    # random shuffle series
+    random.shuffle(series)
+
+    plot_time_data(times, series,stackplot=stackplot)
 
 
 
